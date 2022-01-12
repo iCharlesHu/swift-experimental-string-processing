@@ -221,4 +221,46 @@ class RegexDSLTests: XCTestCase {
           .substring("Extend")]))
     }
   }
+  
+  @available(macOS 12.0, *)
+  func testExtra() {
+    let lines: String = "some 2021-05-05T16:00:00Z text"
+    let output = lines.match {
+      "some "
+      Date.ISO8601FormatStyle().capture()
+      " text"
+    }?.match
+    XCTAssertNotNil(output?.1)
+    let expected = try! Date("2021-05-05T16:00:00Z", strategy: .iso8601)
+    XCTAssertEqual(output!.1, expected)
+  }
+}
+
+extension Int : RegexProtocol {
+  public typealias Capture = EmptyCapture
+  public typealias Match = Substring
+  
+  public var regex: Regex<Substring> {
+    .init(ast: oneOrMore(.eager, atom(.any)))
+  }
+}
+
+extension Date : MatchProtocol {
+  public typealias Capture = EmptyCapture
+}
+
+@available(macOS 12.0, *)
+extension Date.ISO8601FormatStyle : RegexProtocol {
+  public typealias Capture = EmptyCapture
+  public typealias Match = Date
+  
+  public var regex: Regex<Match> {
+    .init(ast: oneOrMore(.eager, atom(.any)))
+  }
+  
+  public func capture() -> CapturingGroup<Tuple2<Substring, Date?>> {
+    return .init(self) { (value: Substring) -> Date? in
+      return try? Date(value, strategy: .iso8601)
+    }
+  }
 }

@@ -80,6 +80,8 @@ extension AST {
   public var hasCapture: Bool {
     if case let .group(g) = self, g.kind.value.isCapturing {
       return true
+    } else if case let .groupTransform(g, _) = self, g.kind.value.isCapturing {
+      return true
     }
 
     return self.children?.any(\.hasCapture) ?? false
